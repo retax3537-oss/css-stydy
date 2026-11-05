@@ -1,22 +1,165 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>5주차 예제 1 · 기본 폼</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>국내 주식 동향 - KOR STOCK</title>
+    <!-- Tailwind CSS (디자인을 쉽게 해주는 도구) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 깔끔한 폰트 적용 */
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body { font-family: 'Pretendard', sans-serif; }
+        
+        /* 한국 주식 시장 색상 (상승: 빨강, 하락: 파랑) */
+        .text-up { color: #e11d48; }
+        .text-down { color: #2563eb; }
+        .bg-up { background-color: #e11d48; }
+        .bg-down { background-color: #2563eb; }
+    </style>
 </head>
-<body>
-  <!--
-  5주차 예제 1 — 기본 폼
-  -->
-  <form>
-    <label for="name">이주현</label>
-    <input type="text" id="name" name="name" required placeholder="이주현">
+<body class="bg-white text-gray-800">
 
-    <label for="email">tonybox990@gmail.com</label>
-    <input type="email" id="email" name="email" required>
+    <!-- 상단 네비게이션 바 -->
+    <header class="flex justify-between items-center px-8 py-4 border-b">
+        <div class="flex items-center gap-2 cursor-pointer" onclick="showList()">
+            <!-- 로고 아이콘 자리 -->
+            <div class="w-8 h-8 bg-blue-600 rounded-sm transform rotate-45 flex items-center justify-center">
+                <div class="w-4 h-4 bg-white rounded-full"></div>
+            </div>
+            <span class="text-xl font-extrabold text-blue-600 ml-2">KOR STOCK</span>
+        </div>
+        <nav class="space-x-6 text-sm font-bold text-gray-500">
+            <a href="#" class="hover:text-black" onclick="showList()">Home</a>
+            <a href="#" class="text-black border-b-2 border-red-600 pb-1" onclick="showList()">주식목록</a>
+        </nav>
+    </header>
 
-    <button type="submit">보내기</button>
-  </form>
+    <!-- 화면이 바뀌는 메인 영역 -->
+    <main id="app" class="pb-24"></main>
+
+    <script>
+        // 가상의 주식 데이터 (GitHub Pages는 정적 호스팅이므로 자바스크립트 배열로 데이터를 구성합니다)
+        const kospi = { index: '2,650.32', change: '12.45', percent: '+0.47%', isUp: true };
+        
+        const stocks = [
+            { id: 1, name: '삼성전자', price: '72,300', change: '500', percent: '+0.70%', isUp: true, img: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=800', desc: '대한민국을 대표하는 글로벌 IT 기업. 스마트폰, 반도체, 가전제품 등을 주력으로 하며 코스피 시가총액 1위 기업입니다. 배당 투자자들에게도 인기가 많습니다.', tags: '#반도체 #대장주 #배당' },
+            { id: 2, name: 'SK하이닉스', price: '164,000', change: '1,500', percent: '-0.91%', isUp: false, img: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=800', desc: '글로벌 메모리 반도체 시장을 선도하는 기업. D램과 낸드플래시가 주력이며 최근 AI 관련 HBM 메모리로 크게 주목받고 있습니다.', tags: '#반도체 #HBM #AI관련주' },
+            { id: 3, name: '현대차', price: '245,500', change: '3,000', percent: '+1.24%', isUp: true, img: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&q=80&w=800', desc: '글로벌 자동차 제조사. 최근 전기차(EV) 및 수소차 시장에서 강세를 보이며 북미 시장에서 높은 판매량을 기록 중입니다.', tags: '#자동차 #전기차 #수출주' },
+            { id: 4, name: 'NAVER', price: '192,000', change: '1,200', percent: '+0.63%', isUp: true, img: 'https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?auto=format&fit=crop&q=80&w=800', desc: '대한민국 최대의 인터넷 검색 포털 사이트 운영 및 플랫폼 사업자. 커머스, 웹툰, 클라우드 등 다양한 사업을 전개하고 있습니다.', tags: '#플랫폼 #IT #포털' },
+            { id: 5, name: '카카오', price: '48,500', change: '400', percent: '-0.82%', isUp: false, img: 'https://images.unsplash.com/photo-1614680376593-902f74cf0d41?auto=format&fit=crop&q=80&w=800', desc: '국민 메신저 카카오톡을 기반으로 한 플랫폼 기업. 금융, 모빌리티, 게임 등 일상생활 전반에 걸친 서비스를 제공합니다.', tags: '#플랫폼 #메신저 #국민주' },
+            { id: 6, name: 'LG에너지솔루션', price: '380,000', change: '5,000', percent: '+1.33%', isUp: true, img: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&q=80&w=800', desc: '세계 최고 수준의 배터리 기술력을 갖춘 2차전지 제조 기업. 글로벌 완성차 업체들에 배터리를 공급합니다.', tags: '#2차전지 #배터리 #전기차' },
+            { id: 7, name: '셀트리온', price: '185,000', change: '0', percent: '0.00%', isUp: null, img: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&q=80&w=800', desc: '바이오시밀러(바이오의약품 복제약) 개발을 선도하는 글로벌 종합 생명공학 기업입니다.', tags: '#바이오 #제약 #바이오시밀러' },
+            { id: 8, name: 'POSCO홀딩스', price: '420,000', change: '2,500', percent: '-0.59%', isUp: false, img: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&q=80&w=800', desc: '철강 사업을 기반으로 2차전지 소재, 리튬 등 친환경 미래 소재 전문 기업으로 도약하고 있습니다.', tags: '#철강 #2차전지소재 #리튬' }
+        ];
+
+        const app = document.getElementById('app');
+
+        // 1. 메인 리스트 화면 (스크린샷 2, 3번의 그리드 느낌)
+        function showList() {
+            const kospiColor = kospi.isUp ? 'text-up' : 'text-down';
+            const kospiArrow = kospi.isUp ? '▲' : '▼';
+
+            let html = `
+                <!-- 상단 코스피 요약 밴드 -->
+                <div class="flex justify-center items-center py-12 bg-gray-50 mb-10 border-b">
+                    <div class="text-center">
+                        <p class="text-sm font-bold text-gray-500 mb-1">현재 코스피 지수</p>
+                        <h2 class="text-4xl font-extrabold mb-2">${kospi.index}</h2>
+                        <div class="text-lg font-bold ${kospiColor}">
+                            ${kospiArrow} ${kospi.change} (${kospi.percent})
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 주식 종목 그리드 -->
+                <div class="max-w-6xl mx-auto px-6">
+                    <h3 class="text-center text-xl font-extrabold mb-10 border-b pb-4 max-w-xs mx-auto">주요 우량주</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
+            `;
+
+            stocks.forEach(stock => {
+                const colorClass = stock.isUp === true ? 'text-up' : (stock.isUp === false ? 'text-down' : 'text-gray-500');
+                const arrow = stock.isUp === true ? '▲' : (stock.isUp === false ? '▼' : '-');
+                const badge = stock.isUp ? '<span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm ml-2">상승장</span>' : '';
+                
+                html += `
+                    <div class="cursor-pointer group" onclick="showDetail(${stock.id})">
+                        <div class="overflow-hidden bg-gray-200 mb-4 h-48 flex items-center justify-center">
+                            <img src="${stock.img}" alt="${stock.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        </div>
+                        <h4 class="text-lg font-extrabold mb-1 flex items-center">${stock.name} ${badge}</h4>
+                        <div class="text-lg font-bold mb-2 ${colorClass}">
+                            ${stock.price}원 <span class="text-sm ml-1">${arrow} ${stock.change}</span>
+                        </div>
+                        <p class="text-xs text-gray-400 mb-2">${stock.tags.split(' ').join(' ')}</p>
+                        <p class="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+                            ${stock.desc}
+                        </p>
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+            app.innerHTML = html;
+            window.scrollTo(0, 0);
+        }
+
+        // 2. 상세 화면 (스크린샷 1번의 피자 상세정보 느낌)
+        function showDetail(id) {
+            const stock = stocks.find(s => s.id === id);
+            if (!stock) return;
+
+            const colorClass = stock.isUp === true ? 'text-up' : (stock.isUp === false ? 'text-down' : 'text-gray-500');
+            const arrow = stock.isUp === true ? '▲' : (stock.isUp === false ? '▼' : '-');
+
+            app.innerHTML = `
+                <div class="max-w-5xl mx-auto px-6 py-16 flex flex-col md:flex-row gap-12">
+                    <!-- 좌측 이미지 (차트나 회사 사진 위치) -->
+                    <div class="w-full md:w-[55%]">
+                        <img src="${stock.img}" alt="${stock.name}" class="w-full object-cover rounded-md shadow-sm h-[400px]">
+                    </div>
+                    
+                    <!-- 우측 상세 정보 -->
+                    <div class="w-full md:w-[45%] flex flex-col pt-4">
+                        <div class="text-sm font-bold text-gray-400 mb-2 uppercase tracking-wide">KOSPI 200</div>
+                        <h2 class="text-3xl font-extrabold mb-6">${stock.name}</h2>
+                        
+                        <div class="text-2xl font-bold mb-8 ${colorClass}">
+                            <span class="text-gray-800 text-lg mr-2">현재가</span> ${stock.price}원
+                            <span class="text-base font-semibold ml-2">${arrow} ${stock.change} (${stock.percent})</span>
+                        </div>
+                        
+                        <div class="border-t border-gray-100 pt-6 mb-8">
+                            <p class="text-gray-600 leading-relaxed text-sm">
+                                ${stock.desc}
+                            </p>
+                        </div>
+                        
+                        <div class="mb-10">
+                            <h4 class="font-bold text-sm mb-3">종목 특징</h4>
+                            <div class="text-xs text-gray-500 space-y-2">
+                                <p>• 국내 주요 우량주</p>
+                                <p>• 관련 테마: <span class="font-semibold">${stock.tags}</span></p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-auto">
+                            <button onclick="showList()" class="bg-[#005c97] hover:bg-[#004a7c] text-white text-sm font-bold py-3.5 px-8 rounded-full transition-colors shadow-md w-max">
+                                ← 메뉴로 돌아가기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            window.scrollTo(0, 0);
+        }
+
+        // 사이트 접속 시 메인 리스트 띄우기
+        showList();
+    </script>
 </body>
 </html>
